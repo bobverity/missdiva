@@ -2,7 +2,7 @@
 title: missdiva
 template:
   params:
-    bootswatch: darkly
+    bootswatch: lux
     
 navbar:
   title: "missdiva"

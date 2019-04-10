@@ -5,7 +5,7 @@ Version: 0.1.0
 Author: Bob Verity
 Maintainer: Bob Verity <r.verity@imperial.ac.uk>
 Description: Contains functions for exploring the distribution of missingness in P.falciparum genetic data, and fitting models (e.g. auto-regressive, ARIMA models) to this distribution. Also contains a genetic simulator for conducting power analysis.
-License: GPL-3
+License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 6.1.1

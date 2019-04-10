@@ -1,0 +1,20 @@
+
+title: missdiva
+template:
+  params:
+    bootswatch: flatly
+    
+navbar:
+  title: "missdiva"
+  left:
+    - text: "Vignettes"
+      menu:
+        - text: "Installation"
+          href: articles/installation.html
+        - text: "Basic tutorial"
+          href: articles/basic-tutorial.html
+    - text: "Functions"
+      href: reference/index.html
+  right:
+   - icon: fa-github
+     href: https://github.com/bobverity/missdiva

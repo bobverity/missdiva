@@ -6,6 +6,7 @@
 
 --------------------------------------------------------------------------------------------------------------------------------
 
-Missing Data Imputation Via ARIMA.
+TODO - some description of package
 
-TODO - some package description here, ending by pointing users to the [webpage](https://bobverity.github.io/missdiva).
+To get started, take a look at the [installation instructions](https://bobverity.github.io/missdiva/articles/installation.html), followed by a [basic tutorial](https://bobverity.github.io/missdiva/articles/basic-tutorial.html) on running the program.
+

@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Dummy function — dummy1 • missdiva</title>
+<title>Simulate biallelic data — sim_biallelic • missdiva</title>
 
 <!-- jquery -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
@@ -30,10 +30,13 @@
 
 
 
-<meta property="og:title" content="Dummy function — dummy1" />
+<meta property="og:title" content="Simulate biallelic data — sim_biallelic" />
 
-<meta property="og:description" content="Simple test function that demonstrates some of the features of
-  this package." />
+<meta property="og:description" content="Simulate biallelic data from a simple statistical model. Inputs
+  include the complexity of infection (COI), population-level allele
+  frequencies (PLAF) and some parameters dicating skew and error
+  distributions. Outputs include the phased haplotypes and the un-phased read
+  count and coverage data." />
 <meta name="twitter:card" content="summary" />
 
 
@@ -109,45 +112,86 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Dummy function</h1>
+    <h1>Simulate biallelic data</h1>
     
-    <div class="hidden name"><code>dummy1.Rd</code></div>
+    <div class="hidden name"><code>sim_biallelic.Rd</code></div>
     </div>
 
     <div class="ref-description">
     
-    <p>Simple test function that demonstrates some of the features of
-  this package.</p>
+    <p>Simulate biallelic data from a simple statistical model. Inputs
+  include the complexity of infection (COI), population-level allele
+  frequencies (PLAF) and some parameters dicating skew and error
+  distributions. Outputs include the phased haplotypes and the un-phased read
+  count and coverage data.</p>
     
     </div>
 
-    <pre class="usage"><span class='fu'>dummy1</span>(<span class='kw'>x</span> <span class='kw'>=</span> <span class='fl'>1</span>:<span class='fl'>5</span>)</pre>
+    <pre class="usage"><span class='fu'>sim_biallelic</span>(<span class='kw'>COI</span> <span class='kw'>=</span> <span class='fl'>3</span>, <span class='kw'>PLAF</span> <span class='kw'>=</span> <span class='fu'><a href='https://www.rdocumentation.org/packages/stats/topics/Uniform'>runif</a></span>(<span class='fl'>10</span>, <span class='fl'>0</span>, <span class='fl'>0.5</span>), <span class='kw'>coverage</span> <span class='kw'>=</span> <span class='fl'>100</span>,
+  <span class='kw'>prob_missing</span> <span class='kw'>=</span> <span class='fl'>0.1</span>, <span class='kw'>alpha</span> <span class='kw'>=</span> <span class='fl'>1</span>, <span class='kw'>overdispersion</span> <span class='kw'>=</span> <span class='fl'>0</span>, <span class='kw'>epsilon</span> <span class='kw'>=</span> <span class='fl'>0</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>x</th>
-      <td><p>vector of values</p></td>
+      <th>COI</th>
+      <td><p>complexity of infection.</p></td>
+    </tr>
+    <tr>
+      <th>PLAF</th>
+      <td><p>vector of population-level allele frequencies at each locus.</p></td>
+    </tr>
+    <tr>
+      <th>coverage</th>
+      <td><p>coverage at each locus. If a single value then the same
+coverage is applied over all loci.</p></td>
+    </tr>
+    <tr>
+      <th>prob_missing</th>
+      <td><p>the probabilty of each locus failing. If a locus fails
+then coverage is set to <code>NA</code>. Can be a vector of values over all loci,
+or a single value in which case the same value applies over all loci.</p></td>
+    </tr>
+    <tr>
+      <th>alpha</th>
+      <td><p>shape parameter of the symmetric Dirichlet prior on strain
+proportions.</p></td>
+    </tr>
+    <tr>
+      <th>overdispersion</th>
+      <td><p>the extent to which counts are over-dispersed relative
+to the binomial distribution. Counts are Beta-binomially distributed, with
+the beta distribution having shape parameters <code>p/overdispersion</code> and
+<code>(1-p)/overdispersion</code>.</p></td>
+    </tr>
+    <tr>
+      <th>epsilon</th>
+      <td><p>the probability of a single read being mis-called as the other
+allele. Applies in both directions.</p></td>
     </tr>
     </table>
     
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
-    <p>Takes a vector of values, returns the square.</p>
+    <p>Simulated data are drawn from a simple statistical model:</p><ol>
+<li><p>Strain proportions are drawn from a symmetric Dirichlet
+    distribution with shape parameter <code>alpha</code>.</p></li>
+<li><p>Phased haplotypes are drawn at every locus, one for each
+    <code>COI</code>. The allele at each locus is drawn from a Bernoulli
+    distribution with probability given by the <code>PLAF</code>.</p></li>
+<li><p>The "true" within-sample allele frequency at every locus is
+    obtained by multiplying haplotypes by their strain proportions, and
+    summing over haplotypes. Errors are introduced through the equation
+    $$wsaf_error = wsaf*(1-e) + (1-wsaf)*e$$where \(wsaf\) is the WSAF
+    without error and \(e\) is the error parameter <code>epsilon</code>.</p></li>
+<li><p>Final read counts are drawn from a beta-binomial distribution with
+    expectation \(w_error\). The raw number of draws is given by the
+    <code>coverage</code>, and the skew of the distribution is given by the
+    <code>overdispersion</code> parameter. If <code>overdispersion = 0</code> then the
+    distribution is binomial, rather than beta-binomial.</p></li>
+</ol>
     
 
-    <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='co'># Find square of first 100 values</span>
-<span class='fu'>dummy1</span>(<span class='fl'>1</span>:<span class='fl'>100</span>)</div><div class='output co'>#&gt; <span class='message'>running R dummy1 function</span></div><div class='output co'>#&gt; running C++ dummy1_cpp function</div><div class='output co'>#&gt; <span class='message'>processing output</span></div><div class='output co'>#&gt;   [1]     1     4     9    16    25    36    49    64    81   100   121   144
-#&gt;  [13]   169   196   225   256   289   324   361   400   441   484   529   576
-#&gt;  [25]   625   676   729   784   841   900   961  1024  1089  1156  1225  1296
-#&gt;  [37]  1369  1444  1521  1600  1681  1764  1849  1936  2025  2116  2209  2304
-#&gt;  [49]  2401  2500  2601  2704  2809  2916  3025  3136  3249  3364  3481  3600
-#&gt;  [61]  3721  3844  3969  4096  4225  4356  4489  4624  4761  4900  5041  5184
-#&gt;  [73]  5329  5476  5625  5776  5929  6084  6241  6400  6561  6724  6889  7056
-#&gt;  [85]  7225  7396  7569  7744  7921  8100  8281  8464  8649  8836  9025  9216
-#&gt;  [97]  9409  9604  9801 10000</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>
@@ -155,9 +199,7 @@
       <li><a href="#arguments">Arguments</a></li>
       
       <li><a href="#details">Details</a></li>
-      
-      <li><a href="#examples">Examples</a></li>
-    </ul>
+          </ul>
 
   </div>
 </div>

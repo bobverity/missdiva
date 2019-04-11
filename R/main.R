@@ -85,3 +85,67 @@ get_coverage_matrix <- function(file = NULL, vcf = NULL, verbose = TRUE) {
 }
 
 
+#------------------------------------------------
+#' @title Make a matrix of missingness using coverage matrix
+#'
+#' @description Use coverage values extracted by the coverage function and using a variable threshold make a matrix of missingness, with a binary variable.
+#'
+#' @param coverage coverage matrix, should be numeric values, can contain NAs.
+#' @param threshold numeric object saying what the minimum coverage threshold is.
+#'
+#'
+#' @import ggplot2
+#' @importFrom stats prcomp
+#' @export
+
+make_missing_matrix <- function(coverage=NULL, threshold=NULL) {
+  
+  # check inputs
+  if (is.numeric.matrix(coverage)==FALSE) {
+    stop("Must have a numeric matrix")
+  }
+  
+  # convert matrix to binary using threshold 0 is non-missing 1 is missing
+  missing_matrix<- ifelse(is.na(coverage)==TRUE,1,ifelse(coverage<=threshold,1,0))
+  return(missing_matrix)
+}
+
+
+#------------------------------------------------
+#' @title Do a PCA plot of missingness using euclidean distance
+#'
+#' @description from the binary missingness matrix compute pairwise euclidean distance matrix and plot the results on a PCA
+#'
+#' @param missing_matrix matrix of missingness encoded as a binary variable
+#'
+#'
+#'
+#' @import ggplot2
+#' @importFrom stats prcomp
+#' @importFrom stats dist
+#'
+#' @export
+
+missing_pca <- function(missing_matrix=NULL) {
+  
+  # check inputs
+  if (is.numeric.matrix(missing_matrix)==FALSE|sum(is.na(missing_matrix))!=0) {
+    stop("Must have a numeric matrix and no NA values")
+  }
+  
+  # compute concordance matrix
+  dist_matrix<-dist(missing_matrix, diag=FALSE, upper=FALSE)
+  
+  #perform PCA
+  pca_with_dist<-prcomp(dist_matrix,sale=FALSE)
+  
+  
+  #plot PCA
+  
+  
+}
+
+
+
+
+

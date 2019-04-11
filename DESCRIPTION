@@ -12,7 +12,10 @@ RoxygenNote: 6.1.1
 LinkingTo: 
     Rcpp
 Imports: 
-    Rcpp
+    Rcpp,
+    vcfR,
+    reshape2,
+    ggplot2
 SystemRequirements: C++11
 Suggests: 
     testthat,

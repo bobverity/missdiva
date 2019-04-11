@@ -2,10 +2,13 @@
 
 export(check_missdiva_loaded)
 export(dummy1)
+export(get_coverage_matrix)
 export(rbetabinom)
 export(rdirichlet)
 export(sim_biallelic)
+import(ggplot2)
 importFrom(Rcpp,sourceCpp)
+importFrom(stats,prcomp)
 importFrom(stats,rbeta)
 importFrom(stats,rbinom)
 importFrom(stats,rgamma)

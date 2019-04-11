@@ -112,17 +112,17 @@ make_missing_matrix <- function(coverage=NULL, threshold=NULL) {
 
 
 #------------------------------------------------
-#' @title Do a PCA plot of missingness using euclidean distance
+#' @title Pairwise distances and principal components
 #'
-#' @description from the binary missingness matrix compute pairwise euclidean distance matrix and plot the results on a PCA
+#' @description from the binary missingness matrix compute pairwise distance matrix and perform PCA
 #'
 #' @param missing_matrix matrix of missingness encoded as a binary variable
 #'
 #'
 #'
-#' @import ggplot2
+#' 
 #' @importFrom stats prcomp
-#' @importFrom stats dist
+#'
 #'
 #' @export
 
@@ -134,16 +134,50 @@ missing_pca <- function(missing_matrix=NULL) {
   }
   
   # compute concordance matrix
-  dist_matrix<-dist(missing_matrix, diag=FALSE, upper=FALSE)
+  dist_matrix<-mapply(function(i) {
+    mapply(function(i,j) mean(missing_matrix[i,] == missing_matrix[j,], na.rm = TRUE),i, 1:nrow(missing_matrix))
+  }, 1:nrow(missing_matrix))
   
   #perform PCA
-  pca_with_dist<-prcomp(dist_matrix,sale=FALSE)
+  pca_on_dist_matrix<-prcomp(dist_matrix,sale=FALSE)
   
+ 
+}
+  
+  
+#------------------------------------------------
+#' @title Do a PCA plot of missingness 
+#'
+#' @description plot the results of PCA using missingness distance matrix
+#'
+#' @param pca_distance PCA on distance matrix
+#'
+#'
+#'
+#' @import ggplot2
+#' 
+#' 
+#'
+#' @export
+
+pca_missingness_plot <- function(pca_dist=NULL,title=NULL) {
+  
+  #get percent variance explained by first 2 pr comps
+  eigs<- pca_dist$sdev^2
+  
+  pct_var_exp_1<- eigs[1]/sum(eigs)
+  pct_var_exp_2<- eigs[2]/sim(eigs)
   
   #plot PCA
+  pca_missingness_plot<-ggplot(data=pca_on_dist_matrix$x,aes(x=PC1,y=PC2))+geom_point()+ggtitle(title)+xlab(pct_var_exp_1) + ylab(pct_var_exp_2)
   
-  
+  return(pca_missingness_plot)
 }
+
+
+
+  
+  
 
 
 

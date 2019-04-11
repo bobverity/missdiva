@@ -156,13 +156,13 @@ missing_pca <- function(missing_matrix=NULL) {
 #'
 #'
 #' @import ggplot2
-#' @import dplyr
 #' @importFrom stats prcomp
 #' @importFrom stats dist
 #'
 #' @export
 
 
+## 
 coverage_plots <- function(coverage, threshold) { 
   # first convering the coverage matrix into a data frame 
   coverage_df <- as.data.frame(coverage)
@@ -176,6 +176,7 @@ coverage_plots <- function(coverage, threshold) {
   coverage_long$filt_pass <- NA
   coverage_long$filt_pass[coverage_long$coverage >= threshold] <- 1
   coverage_long$filt_pass[coverage_long$coverage < threshold] <- 0
+  coverage_long$filt_pass[is.na(coverage_long$coverage)] <- 0
   cov_table <- table(coverage_long$filt_pass)
   
   ## now need to plot 
@@ -185,21 +186,30 @@ coverage_plots <- function(coverage, threshold) {
   
   
   ### plotting the chromosome position vs. the proportion of reads that were > 20
-  plot1 <- ggplot(coverage_pos, aes(x =POS, y = pass_pct))+ geom_point() + 
+  plot1 <- ggplot(coverage_pos, aes(x =POS, y = pass_pct, group = 1)) + geom_line() + 
+    layer(geom_params = list(fill = "red", alpha = 0.5))+ 
+    theme_bw() + 
     theme(axis.text.x = element_blank(),
-          axis.ticks.x = element_blank())
+          axis.ticks.x = element_blank()) + 
+    ggtitle("% of samples that pass filtering at each position")
+  
   ### now we want to look at the proportion of sites that passed filtering for each sample 
   coverage_samp <- coverage_long %>%
     group_by(sample_id) %>%
     summarise(pass_pct = mean(filt_pass, na.rm = T))
   
-  
+  # we need to order the bars by the level of coverage 
+  coverage_samp$sample_id <- factor(coverage_samp$sample_id, levels = coverage_samp$sample_id[order(-coverage_samp$pass_pct)])
   plot2 <- ggplot(coverage_samp, aes(x =sample_id, y = pass_pct))+ geom_bar(stat = "identity") +
+    ggtitle("% of sites that pass filtering for each sample") + 
     theme(axis.text.x = element_blank(),
-          axis.ticks.x = element_blank())
+          axis.ticks.x = element_blank()) + 
+    theme_bw()
   
-  return(list(cov_table, plot1, plot2))
+  # histogram of coverage passing 
+  plot3 <- ggplot(coverage_samp, aes(x = pass_pct)) + geom_histogram(breaks = seq(0,1, by =0.02)) + 
+    ggtitle("Histogram of sample quality") + 
+    theme_bw()
+  
+  return(list(cov_table, plot1, plot2, plot3))
 }
-
-
-

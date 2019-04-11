@@ -165,9 +165,10 @@ pca_missingness_plot <- function(pca_dist=NULL,title=NULL) {
   #get percent variance explained by first 2 pr comps
   eigs<- pca_dist$sdev^2
   
-  pct_var_exp_1<- eigs[1]/sum(eigs)
-  pct_var_exp_2<- eigs[2]/sim(eigs)
+  pct_var_exp_1<- as.character(eigs[1]/sum(eigs))
+  pct_var_exp_2<- as.character(eigs[2]/sim(eigs))
   
+  pca_dist$x<- as.data.frame(pca_dist$x)
   #plot PCA
   pca_missingness_plot<-ggplot(data=pca_on_dist_matrix$x,aes(x=PC1,y=PC2))+geom_point()+ggtitle(title)+xlab(pct_var_exp_1) + ylab(pct_var_exp_2)
   

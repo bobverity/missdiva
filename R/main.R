@@ -146,6 +146,60 @@ missing_pca <- function(missing_matrix=NULL) {
 }
 
 
+#------------------------------------------------
+#' @title Making exploratory plots of missingness by position and sample 
+#'
+#' @description from the binary missingness matrix compute and plot missingness 
+#'
+#' @param missing_matrix matrix of missingness encoded as a binary variable
+#'
+#'
+#'
+#' @import ggplot2
+#' @import dplyr
+#' @importFrom stats prcomp
+#' @importFrom stats dist
+#'
+#' @export
+
+
+coverage_plots <- function(coverage, threshold) { 
+  # first convering the coverage matrix into a data frame 
+  coverage_df <- as.data.frame(coverage)
+  coverage_df$sample_id <- rownames(coverage_df)
+  
+  ### need to turn data into a long format
+  coverage_long <- coverage_df %>%
+    gather(key = "POS", value = "coverage", -sample_id)
+  
+  ## now filtering 
+  coverage_long$filt_pass <- NA
+  coverage_long$filt_pass[coverage_long$coverage >= threshold] <- 1
+  coverage_long$filt_pass[coverage_long$coverage < threshold] <- 0
+  cov_table <- table(coverage_long$filt_pass)
+  
+  ## now need to plot 
+  coverage_pos <- coverage_long %>%
+    group_by(POS) %>%
+    summarise(pass_pct = mean(filt_pass, na.rm = T))
+  
+  
+  ### plotting the chromosome position vs. the proportion of reads that were > 20
+  plot1 <- ggplot(coverage_pos, aes(x =POS, y = pass_pct))+ geom_point() + 
+    theme(axis.text.x = element_blank(),
+          axis.ticks.x = element_blank())
+  ### now we want to look at the proportion of sites that passed filtering for each sample 
+  coverage_samp <- coverage_long %>%
+    group_by(sample_id) %>%
+    summarise(pass_pct = mean(filt_pass, na.rm = T))
+  
+  
+  plot2 <- ggplot(coverage_samp, aes(x =sample_id, y = pass_pct))+ geom_bar(stat = "identity") +
+    theme(axis.text.x = element_blank(),
+          axis.ticks.x = element_blank())
+  
+  return(list(cov_table, plot1, plot2))
+}
 
 
 

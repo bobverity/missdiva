@@ -170,7 +170,8 @@ pca_missingness_plot <- function(pca_dist=NULL,title=NULL) {
   
   pca_dist$x<- as.data.frame(pca_dist$x)
   #plot PCA
-  pca_missingness_plot<-ggplot(data=pca_on_dist_matrix$x,aes(x=PC1,y=PC2))+geom_point()+ggtitle(title)+xlab(pct_var_exp_1) + ylab(pct_var_exp_2)
+  pca_missingness_plot<-ggplot(data=pca_on_dist_matrix$x,aes(x=PC1,y=PC2))
+  pca_missingness_plot+geom_point()+ggtitle(title)+xlab(pct_var_exp_1) + ylab(pct_var_exp_2)
   
   return(pca_missingness_plot)
 }

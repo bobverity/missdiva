@@ -112,17 +112,17 @@ make_missing_matrix <- function(coverage=NULL, threshold=NULL) {
 
 
 #------------------------------------------------
-#' @title Do a PCA plot of missingness using euclidean distance
+#' @title Pairwise distances and principal components
 #'
-#' @description from the binary missingness matrix compute pairwise euclidean distance matrix and plot the results on a PCA
+#' @description from the binary missingness matrix compute pairwise distance matrix and perform PCA
 #'
 #' @param missing_matrix matrix of missingness encoded as a binary variable
 #'
 #'
 #'
-#' @import ggplot2
+#' 
 #' @importFrom stats prcomp
-#' @importFrom stats dist
+#'
 #'
 #' @export
 
@@ -134,15 +134,46 @@ missing_pca <- function(missing_matrix=NULL) {
   }
   
   # compute concordance matrix
-  dist_matrix<-dist(missing_matrix, diag=FALSE, upper=FALSE)
+  dist_matrix<-mapply(function(i) {
+    mapply(function(i,j) mean(missing_matrix[i,] == missing_matrix[j,], na.rm = TRUE),i, 1:nrow(missing_matrix))
+  }, 1:nrow(missing_matrix))
   
   #perform PCA
-  pca_with_dist<-prcomp(dist_matrix,sale=FALSE)
+  pca_on_dist_matrix<-prcomp(dist_matrix,sale=FALSE)
+  
+ 
+}
   
   
+#------------------------------------------------
+#' @title Do a PCA plot of missingness 
+#'
+#' @description plot the results of PCA using missingness distance matrix
+#'
+#' @param pca_distance PCA on distance matrix
+#'
+#'
+#'
+#' @import ggplot2
+#' 
+#' 
+#'
+#' @export
+
+pca_missingness_plot <- function(pca_dist=NULL,title=NULL) {
+  
+  #get percent variance explained by first 2 pr comps
+  eigs<- pca_dist$sdev^2
+  
+  pct_var_exp_1<- as.character(eigs[1]/sum(eigs))
+  pct_var_exp_2<- as.character(eigs[2]/sim(eigs))
+  
+  pca_dist$x<- as.data.frame(pca_dist$x)
   #plot PCA
+  pca_missingness_plot<-ggplot(data=pca_on_dist_matrix$x,aes(x=PC1,y=PC2))
+  pca_missingness_plot+geom_point()+ggtitle(title)+xlab(pct_var_exp_1) + ylab(pct_var_exp_2)
   
-  
+  return(pca_missingness_plot)
 }
 
 
@@ -156,6 +187,7 @@ missing_pca <- function(missing_matrix=NULL) {
 #'
 #'
 #' @import ggplot2
+#' @import dplyr
 #' @importFrom stats prcomp
 #' @importFrom stats dist
 #'
@@ -187,7 +219,6 @@ coverage_plots <- function(coverage, threshold) {
   
   ### plotting the chromosome position vs. the proportion of reads that were > 20
   plot1 <- ggplot(coverage_pos, aes(x =POS, y = pass_pct, group = 1)) + geom_line() + 
-    layer(geom_params = list(fill = "red", alpha = 0.5))+ 
     theme_bw() + 
     theme(axis.text.x = element_blank(),
           axis.ticks.x = element_blank()) + 
@@ -200,11 +231,12 @@ coverage_plots <- function(coverage, threshold) {
   
   # we need to order the bars by the level of coverage 
   coverage_samp$sample_id <- factor(coverage_samp$sample_id, levels = coverage_samp$sample_id[order(-coverage_samp$pass_pct)])
+  
   plot2 <- ggplot(coverage_samp, aes(x =sample_id, y = pass_pct))+ geom_bar(stat = "identity") +
-    ggtitle("% of sites that pass filtering for each sample") + 
-    theme(axis.text.x = element_blank(),
-          axis.ticks.x = element_blank()) + 
-    theme_bw()
+    theme(axis.text.x = element_blank(), axis.ticks.x = element_blank()) + 
+    #theme_bw() +
+    ggtitle("% of sites that pass filtering for each sample")
+    
   
   # histogram of coverage passing 
   plot3 <- ggplot(coverage_samp, aes(x = pass_pct)) + geom_histogram(breaks = seq(0,1, by =0.02)) + 
@@ -213,3 +245,4 @@ coverage_plots <- function(coverage, threshold) {
   
   return(list(cov_table, plot1, plot2, plot3))
 }
+

@@ -51,6 +51,27 @@ dummy1 <- function(x = 1:5) {
 }
 
 #------------------------------------------------
+#' @title Read in vcf object
+#'
+#' @description Read in vcf object.
+#'
+#' @param file path to vcf file.
+#' @param verbose if reading from file, whether to read in verbose manner.
+#'
+#' @export
+
+read_vcf <- function(file, verbose = TRUE) {
+  
+  # check inputs
+  assert_single_logical(verbose)
+  
+  # read in vcf
+  vcf <- vcfR::read.vcfR(file = file, verbose = verbose)
+  
+  return(vcf)
+}
+
+#------------------------------------------------
 #' @title Extract coverage matrix from vcf object
 #'
 #' @description Extract coverage matrix from vcf object.
@@ -93,55 +114,48 @@ get_coverage_matrix <- function(file = NULL, vcf = NULL, verbose = TRUE) {
 #' @param coverage coverage matrix, should be numeric values, can contain NAs.
 #' @param threshold numeric object saying what the minimum coverage threshold is.
 #'
-#'
-#' @import ggplot2
-#' @importFrom stats prcomp
 #' @export
 
 make_missing_matrix <- function(coverage=NULL, threshold=NULL) {
-  
-  # check inputs
-  if (is.numeric.matrix(coverage)==FALSE) {
-    stop("Must have a numeric matrix")
-  }
   
   # convert matrix to binary using threshold 0 is non-missing 1 is missing
   missing_matrix<- ifelse(is.na(coverage)==TRUE,1,ifelse(coverage<=threshold,1,0))
   return(missing_matrix)
 }
 
-
 #------------------------------------------------
-#' @title Pairwise distances and principal components
+#' @title Get pairwise distances based on concordance
 #'
-#' @description from the binary missingness matrix compute pairwise distance matrix and perform PCA
+#' @description Get pairwise distances based on concordance.
 #'
 #' @param missing_matrix matrix of missingness encoded as a binary variable
 #'
-#'
-#'
-#' 
-#' @importFrom stats prcomp
-#'
-#'
 #' @export
 
-missing_pca <- function(missing_matrix=NULL) {
-  
-  # check inputs
-  if (is.numeric.matrix(missing_matrix)==FALSE|sum(is.na(missing_matrix))!=0) {
-    stop("Must have a numeric matrix and no NA values")
-  }
+get_missing_distance <- function(missing_matrix = NULL) {
   
   # compute concordance matrix
-  dist_matrix<-mapply(function(i) {
-    mapply(function(i,j) mean(missing_matrix[i,] == missing_matrix[j,], na.rm = TRUE),i, 1:nrow(missing_matrix))
-  }, 1:nrow(missing_matrix))
+  ret <- as.matrix(dist(missing_matrix, method = "manhattan") / ncol(missing_matrix))
   
-  #perform PCA
-  pca_on_dist_matrix<-prcomp(dist_matrix,sale=FALSE)
+  return(ret)
+}
+
+#------------------------------------------------
+#' @title TODO
+#'
+#' @description TODO
+#'
+#' @param distance_matrix matrix of distance
+#'
+#' @importFrom stats prcomp
+#' @export
+
+missing_pca <- function(distance_matrix = NULL) {
   
- 
+  # perform PCA
+  pca <- prcomp(distance_matrix, scale = FALSE)
+  
+  return(pca)
 }
   
   
@@ -152,12 +166,7 @@ missing_pca <- function(missing_matrix=NULL) {
 #'
 #' @param pca_distance PCA on distance matrix
 #'
-#'
-#'
 #' @import ggplot2
-#' 
-#' 
-#'
 #' @export
 
 pca_missingness_plot <- function(pca_dist=NULL,title=NULL) {

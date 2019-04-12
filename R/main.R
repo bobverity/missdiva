@@ -51,6 +51,68 @@ dummy1 <- function(x = 1:5) {
 }
 
 #------------------------------------------------
+#' @title Crude method for stitching together vcfs
+#'
+#' @description Crude method for stitching together vcfs.
+#'
+#' @param input_paths vector of file paths to input vcf files.
+#' @param output_path single file path specifying thr output vcf file.
+#' @param trim_lines how many lines at the top of the vcf file to drop when
+#'   stitching.
+#' @param check_overwrite Boolean, whether to prompt user before overwriting
+#'   existing files.
+#'
+#' @export
+
+vcf_merge_crude <- function(input_paths, output_path, trim_lines = 5, check_overwrite = TRUE) {
+  
+  # check inputs
+  assert_vector(input_paths)
+  assert_single(output_path)
+  assert_single_pos_int(trim_lines, zero_allowed = TRUE)
+  assert_single_logical(check_overwrite)
+  
+  # check that all input files exist
+  if (!all(file.exists(input_paths))) {
+    w <- which(!file.exists(input_paths))[1]
+    stop(sprintf("input file %s could not be found", input_paths[w]))
+  }
+  
+  # check whether to overwrite existing
+  if (file.exists(output_path) & check_overwrite) {
+    if (!user_yes_no("output file already exists. Overwrite? (Y/N)")) {
+      message("returning without overwriting")
+      return()
+    }
+    message("overwriting existing")
+  }
+  
+  # loop through input files
+  nf <- length(input_paths)
+  ret <- NULL
+  for (i in 1:nf) {
+    
+    # read input file
+    con <- file(input_paths[i], "r")
+    dat <- readLines(con)
+    close(con)
+    
+    # trim header lines
+    if (i > 1 & trim_lines > 0) {
+      dat <- dat[-(1:trim_lines)]
+    }
+    
+    # stitch together
+    ret <- c(ret, dat)
+  }
+  
+  # write output to file
+  con <- file(output_path, "w")
+  writeLines(ret, con)
+  close(con)
+}
+
+#------------------------------------------------
 #' @title Read in vcf object
 #'
 #' @description Read in vcf object.

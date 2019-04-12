@@ -217,7 +217,7 @@ get_pcoa <- function(distance_matrix = NULL) {
   ret <- cmdscale(distance_matrix, eig = TRUE)
   
   # add variance explained to ret object
-  ret$var_explained <- ret$eig/sum(ret$eig)
+  ret$var_explained <- abs(ret$eig)/sum(abs(ret$eig))
   
   return(ret)
 }

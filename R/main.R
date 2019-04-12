@@ -176,10 +176,11 @@ get_coverage_matrix <- function(file = NULL, vcf = NULL, verbose = TRUE) {
 #'
 #' @export
 
-make_missing_matrix <- function(coverage=NULL, threshold=NULL) {
+make_missing_matrix <- function(coverage = NULL, threshold = NULL) {
   
   # convert matrix to binary using threshold 0 is non-missing 1 is missing
-  missing_matrix<- ifelse(is.na(coverage)==TRUE,1,ifelse(coverage<=threshold,1,0))
+  missing_matrix <- ifelse(is.na(coverage) == TRUE, 1, ifelse(coverage <= threshold, 1, 0))
+  
   return(missing_matrix)
 }
 
@@ -201,117 +202,22 @@ get_missing_distance <- function(missing_matrix = NULL) {
 }
 
 #------------------------------------------------
-#' @title TODO
+#' @title Principal coordinates analysis (PCoA) on distance matrix
 #'
-#' @description TODO
+#' @description Principal coordinates analysis (PCoA) on distance matrix.
 #'
-#' @param distance_matrix matrix of distance
+#' @param distance_matrix matrix of distances.
 #'
-#' @importFrom stats prcomp
+#' @importFrom stats cmdscale
 #' @export
 
-missing_pca <- function(distance_matrix = NULL) {
+get_pcoa <- function(distance_matrix = NULL) {
   
-  # perform PCA
-  pca <- prcomp(distance_matrix, scale = FALSE)
+  # perform pcoa
+  ret <- cmdscale(distance_matrix, eig = TRUE)
   
-  return(pca)
+  # add variance explained to ret object
+  ret$var_explained <- ret$eig/sum(ret$eig)
+  
+  return(ret)
 }
-  
-  
-#------------------------------------------------
-#' @title Do a PCA plot of missingness 
-#'
-#' @description plot the results of PCA using missingness distance matrix
-#'
-#' @param pca_distance PCA on distance matrix
-#'
-#' @import ggplot2
-#' @export
-
-pca_missingness_plot <- function(pca_dist=NULL,title=NULL) {
-  
-  #get percent variance explained by first 2 pr comps
-  eigs<- pca_dist$sdev^2
-  
-  pct_var_exp_1<- as.character(eigs[1]/sum(eigs))
-  pct_var_exp_2<- as.character(eigs[2]/sim(eigs))
-  
-  pca_dist$x<- as.data.frame(pca_dist$x)
-  #plot PCA
-  pca_missingness_plot<-ggplot(data=pca_on_dist_matrix$x,aes(x=PC1,y=PC2))
-  pca_missingness_plot+geom_point()+ggtitle(title)+xlab(pct_var_exp_1) + ylab(pct_var_exp_2)
-  
-  return(pca_missingness_plot)
-}
-
-
-#------------------------------------------------
-#' @title Making exploratory plots of missingness by position and sample 
-#'
-#' @description from the binary missingness matrix compute and plot missingness 
-#'
-#' @param missing_matrix matrix of missingness encoded as a binary variable
-#'
-#'
-#'
-#' @import ggplot2
-#' @import dplyr
-#' @importFrom stats prcomp
-#' @importFrom stats dist
-#'
-#' @export
-
-
-## 
-coverage_plots <- function(coverage, threshold) { 
-  # first convering the coverage matrix into a data frame 
-  coverage_df <- as.data.frame(coverage)
-  coverage_df$sample_id <- rownames(coverage_df)
-  
-  ### need to turn data into a long format
-  coverage_long <- coverage_df %>%
-    gather(key = "POS", value = "coverage", -sample_id)
-  
-  ## now filtering 
-  coverage_long$filt_pass <- NA
-  coverage_long$filt_pass[coverage_long$coverage >= threshold] <- 1
-  coverage_long$filt_pass[coverage_long$coverage < threshold] <- 0
-  coverage_long$filt_pass[is.na(coverage_long$coverage)] <- 0
-  cov_table <- table(coverage_long$filt_pass)
-  
-  ## now need to plot 
-  coverage_pos <- coverage_long %>%
-    group_by(POS) %>%
-    summarise(pass_pct = mean(filt_pass, na.rm = T))
-  
-  
-  ### plotting the chromosome position vs. the proportion of reads that were > 20
-  plot1 <- ggplot(coverage_pos, aes(x =POS, y = pass_pct, group = 1)) + geom_line() + 
-    theme_bw() + 
-    theme(axis.text.x = element_blank(),
-          axis.ticks.x = element_blank()) + 
-    ggtitle("% of samples that pass filtering at each position")
-  
-  ### now we want to look at the proportion of sites that passed filtering for each sample 
-  coverage_samp <- coverage_long %>%
-    group_by(sample_id) %>%
-    summarise(pass_pct = mean(filt_pass, na.rm = T))
-  
-  # we need to order the bars by the level of coverage 
-  coverage_samp$sample_id <- factor(coverage_samp$sample_id, levels = coverage_samp$sample_id[order(-coverage_samp$pass_pct)])
-  
-  plot2 <- ggplot(coverage_samp, aes(x =sample_id, y = pass_pct))+ geom_bar(stat = "identity") +
-    theme(axis.text.x = element_blank(), axis.ticks.x = element_blank()) + 
-    #theme_bw() +
-    ggtitle("% of sites that pass filtering for each sample")
-    
-  
-  # histogram of coverage passing 
-  plot3 <- ggplot(coverage_samp, aes(x = pass_pct)) + geom_histogram(breaks = seq(0,1, by =0.02)) + 
-    ggtitle("Histogram of sample quality") + 
-    theme_bw()
-  
-  return(list(cov_table, plot1, plot2, plot3))
-}
-

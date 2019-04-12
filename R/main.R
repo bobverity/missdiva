@@ -57,19 +57,16 @@ dummy1 <- function(x = 1:5) {
 #'
 #' @param input_paths vector of file paths to input vcf files.
 #' @param output_path single file path specifying thr output vcf file.
-#' @param trim_lines how many lines at the top of the vcf file to drop when
-#'   stitching.
 #' @param check_overwrite Boolean, whether to prompt user before overwriting
 #'   existing files.
 #'
 #' @export
 
-vcf_merge_crude <- function(input_paths, output_path, trim_lines = 5, check_overwrite = TRUE) {
+vcf_concat_crude <- function(input_paths, output_path, check_overwrite = TRUE) {
   
   # check inputs
   assert_vector(input_paths)
   assert_single(output_path)
-  assert_single_pos_int(trim_lines, zero_allowed = TRUE)
   assert_single_logical(check_overwrite)
   
   # check that all input files exist
@@ -97,9 +94,10 @@ vcf_merge_crude <- function(input_paths, output_path, trim_lines = 5, check_over
     dat <- readLines(con)
     close(con)
     
-    # trim header lines
-    if (i > 1 & trim_lines > 0) {
-      dat <- dat[-(1:trim_lines)]
+    # trim lines that start with # symbol
+    if (i > 1) {
+      w <- which(as.vector(mapply(function(x) substr(x,1,1) == "#", dat)))
+      dat <- dat[-w]
     }
     
     # stitch together

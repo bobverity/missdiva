@@ -9,8 +9,11 @@ make_missing_matrix(coverage = NULL, threshold = NULL)
 \arguments{
 \item{coverage}{coverage matrix, should be numeric values, can contain NAs.}
 
-\item{threshold}{numeric object saying what the minimum coverage threshold is.}
+\item{threshold}{coverage values below this threshold are considered missing
+data.}
 }
 \description{
-Use coverage values extracted by the coverage function and using a variable threshold make a matrix of missingness, with a binary variable.
+Use coverage values extracted by the function
+  \code{get_coverage_matrix()} and, using a variable threshold, make a binary
+  matrix of missingness.
 }

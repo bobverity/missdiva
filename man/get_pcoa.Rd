@@ -10,5 +10,6 @@ get_pcoa(distance_matrix = NULL)
 \item{distance_matrix}{matrix of distances.}
 }
 \description{
-Principal coordinates analysis (PCoA) on distance matrix.
+Carry out principal coordinates analysis (PCoA) on a distance
+  matrix.
 }

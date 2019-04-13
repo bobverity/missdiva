@@ -43,6 +43,7 @@
 #' @param epsilon the probability of a single read being mis-called as the other
 #'   allele. Applies in both directions.
 #'
+#' @importFrom stats runif
 #' @export
 
 sim_biallelic <- function(COI = 3,

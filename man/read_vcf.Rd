@@ -12,5 +12,5 @@ read_vcf(file, verbose = TRUE)
 \item{verbose}{if reading from file, whether to read in verbose manner.}
 }
 \description{
-Read in vcf object.
+Read in vcf object using the \code{vcfR} function \code{read.vcf}.
 }

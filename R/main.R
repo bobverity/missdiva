@@ -51,9 +51,13 @@ dummy1 <- function(x = 1:5) {
 }
 
 #------------------------------------------------
-#' @title Crude method for stitching together vcfs
+#' @title Crude method for concatenating vcfs
 #'
-#' @description Crude method for stitching together vcfs.
+#' @description A vector of input vcf file paths is specified. Each file is read
+#'   in, and any lines starting with the "#" symbol are taken to be header
+#'   lines. Header lines are retained for the first input file, but dropped
+#'   thereafter when concatenating files. The final concatenated data is printed
+#'   to file.
 #'
 #' @param input_paths vector of file paths to input vcf files.
 #' @param output_path single file path specifying thr output vcf file.
@@ -113,7 +117,7 @@ vcf_concat_crude <- function(input_paths, output_path, check_overwrite = TRUE) {
 #------------------------------------------------
 #' @title Read in vcf object
 #'
-#' @description Read in vcf object.
+#' @description Read in vcf object using the \code{vcfR} function \code{read.vcf}.
 #'
 #' @param file path to vcf file.
 #' @param verbose if reading from file, whether to read in verbose manner.
@@ -134,7 +138,7 @@ read_vcf <- function(file, verbose = TRUE) {
 #------------------------------------------------
 #' @title Extract coverage matrix from vcf object
 #'
-#' @description Extract coverage matrix from vcf object.
+#' @description Extract coverage matrix, i.e. the "DP" element, from vcf object.
 #'
 #' @param file path to vcf file.
 #' @param vcf object of class \code{vcfR}.
@@ -169,10 +173,13 @@ get_coverage_matrix <- function(file = NULL, vcf = NULL, verbose = TRUE) {
 #------------------------------------------------
 #' @title Make a matrix of missingness using coverage matrix
 #'
-#' @description Use coverage values extracted by the coverage function and using a variable threshold make a matrix of missingness, with a binary variable.
+#' @description Use coverage values extracted by the function
+#'   \code{get_coverage_matrix()} and, using a variable threshold, make a binary
+#'   matrix of missingness.
 #'
 #' @param coverage coverage matrix, should be numeric values, can contain NAs.
-#' @param threshold numeric object saying what the minimum coverage threshold is.
+#' @param threshold coverage values below this threshold are considered missing
+#'   data.
 #'
 #' @export
 
@@ -185,15 +192,19 @@ make_missing_matrix <- function(coverage = NULL, threshold = NULL) {
 }
 
 #------------------------------------------------
-#' @title Get pairwise distances based on concordance
+#' @title Get pairwise missingness distances based on discordance
 #'
-#' @description Get pairwise distances based on concordance.
+#' @description Discordance here is defined as the proportion of loci that do
+#'   not match in their missingness status, i.e. one sample is missing at that
+#'   locus and the other is not. This is equivalent to the Manhattan distance
+#'   between rows of the missingness matrix.
 #'
-#' @param missing_matrix matrix of missingness encoded as a binary variable
+#' @param missing_matrix matrix of missingness encoded as a binary variable.
 #'
+#' @importFrom stats dist
 #' @export
 
-get_missing_distance <- function(missing_matrix = NULL) {
+get_missing_distance <- function(missing_matrix) {
   
   # compute concordance matrix
   ret <- as.matrix(dist(missing_matrix, method = "manhattan") / ncol(missing_matrix))
@@ -204,7 +215,8 @@ get_missing_distance <- function(missing_matrix = NULL) {
 #------------------------------------------------
 #' @title Principal coordinates analysis (PCoA) on distance matrix
 #'
-#' @description Principal coordinates analysis (PCoA) on distance matrix.
+#' @description Carry out principal coordinates analysis (PCoA) on a distance
+#'   matrix.
 #'
 #' @param distance_matrix matrix of distances.
 #'

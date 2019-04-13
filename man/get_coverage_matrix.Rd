@@ -14,5 +14,5 @@ get_coverage_matrix(file = NULL, vcf = NULL, verbose = TRUE)
 \item{verbose}{if reading from file, whether to read in verbose manner.}
 }
 \description{
-Extract coverage matrix from vcf object.
+Extract coverage matrix, i.e. the "DP" element, from vcf object.
 }

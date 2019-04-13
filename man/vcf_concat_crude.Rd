@@ -2,7 +2,7 @@
 % Please edit documentation in R/main.R
 \name{vcf_concat_crude}
 \alias{vcf_concat_crude}
-\title{Crude method for stitching together vcfs}
+\title{Crude method for concatenating vcfs}
 \usage{
 vcf_concat_crude(input_paths, output_path, check_overwrite = TRUE)
 }
@@ -15,5 +15,9 @@ vcf_concat_crude(input_paths, output_path, check_overwrite = TRUE)
 existing files.}
 }
 \description{
-Crude method for stitching together vcfs.
+A vector of input vcf file paths is specified. Each file is read
+  in, and any lines starting with the "#" symbol are taken to be header
+  lines. Header lines are retained for the first input file, but dropped
+  thereafter when concatenating files. The final concatenated data is printed
+  to file.
 }

@@ -25,7 +25,8 @@ plot_coverage_matrix <- function(x = NULL) {
                             axis.ticks.y = element_blank())
   
   # add raster
-  plot1 <- plot1 + geom_raster(aes(x = Var1, y = Var2, fill = log(value)), data = reshape2::melt(x))
+  df_plot <- reshape2::melt(x)
+  plot1 <- plot1 + geom_raster(aes_(x = ~V1, y = ~V2, fill = log(~value)), data = df_plot)
   
   # legends and scales
   plot1 <- plot1 + scale_fill_viridis_c(option = "plasma", name = "log(coverage)")
@@ -49,7 +50,7 @@ plot_coverage_matrix <- function(x = NULL) {
 plot_pcoa <- function(pcoa = NULL, title = NULL) {
   
   # get data into ggplot format
-  plot_df <- as.data.frame(pcoa$points)
+  df_plot <- as.data.frame(pcoa$points)
   
   # get variance explained by first two components
   var1 <- sprintf("PC1 = %s%%", round(pcoa$var_explained[1]*100, digits = 2))
@@ -57,76 +58,120 @@ plot_pcoa <- function(pcoa = NULL, title = NULL) {
   
   # plot PCoA first two axes
   plot1 <- ggplot() + theme_bw()
-  plot1 <- plot1 + geom_point(aes(x = V1, y = V2), data = plot_df)
+  plot1 <- plot1 + geom_point(aes_(x = ~V1, y = ~V2), data = df_plot)
   plot1 <- plot1 + ggtitle(title) + xlab(var1) + ylab(var2)
   
   return(plot1)
 }
 
 #------------------------------------------------
-#' @title Make exploratory plots of missingness by position and sample 
+#' @title Plot quality of each locus
 #'
-#' @description Make exploratory plots of missingness by position and sample 
+#' @description Plot quality of each locus.
 #'
-#' @param coverage coverage matrix.
-#' @param threshold below this threshold is coded as missing.
+#' @param missing_matrix matrix of missingness encoded as a binary variable.
 #'
 #' @import ggplot2
-#' @importFrom stats prcomp
-#' @importFrom stats dist
-#'
 #' @export
 
-coverage_plots <- function(coverage, threshold) {
+plot_locus_quality <- function(missing_matrix) {
   
-  # first converting the coverage matrix into a data frame 
-  coverage_df <- as.data.frame(coverage)
-  coverage_df$sample_id <- rownames(coverage_df)
+  # check inputs
+  assert_matrix(missing_matrix)
   
-  # need to turn data into a long format
-  coverage_long <- coverage_df %>%
-    gather(key = "POS", value = "coverage", -sample_id)
+  # get quality per locus
+  q <- 1 - colMeans(missing_matrix, na.rm = TRUE)
+  df_plot <- data.frame(pos = 1:length(q), quality = q)
   
-  # now filtering 
-  coverage_long$filt_pass <- NA
-  coverage_long$filt_pass[coverage_long$coverage >= threshold] <- 1
-  coverage_long$filt_pass[coverage_long$coverage < threshold] <- 0
-  coverage_long$filt_pass[is.na(coverage_long$coverage)] <- 0
-  cov_table <- table(coverage_long$filt_pass)
+  # basic plot
+  plot1 <- ggplot() + theme_bw() + theme(axis.text.x = element_blank(),
+                                         axis.ticks.x = element_blank())
+  plot1 <- plot1 + geom_line(aes_(x = ~pos, y = ~quality), data = df_plot)
+  plot1 <- plot1 + xlab("pos (relative)") + ylab("quality")
+  plot1 <- plot1 + ylim(c(0,1))
   
-  # now need to plot 
-  coverage_pos <- coverage_long %>%
-    group_by(POS) %>%
-    summarise(pass_pct = mean(filt_pass, na.rm = T))
-  
-  
-  # plotting the chromosome position vs. the proportion of reads that were > 20
-  plot1 <- ggplot(coverage_pos, aes(x =POS, y = pass_pct, group = 1)) + geom_line() + 
-    theme_bw() + 
-    theme(axis.text.x = element_blank(),
-          axis.ticks.x = element_blank()) + 
-    ggtitle("% of samples that pass filtering at each position")
-  
-  # now we want to look at the proportion of sites that passed filtering for each sample 
-  coverage_samp <- coverage_long %>%
-    group_by(sample_id) %>%
-    summarise(pass_pct = mean(filt_pass, na.rm = T))
-  
-  # we need to order the bars by the level of coverage 
-  coverage_samp$sample_id <- factor(coverage_samp$sample_id, levels = coverage_samp$sample_id[order(-coverage_samp$pass_pct)])
-  
-  plot2 <- ggplot(coverage_samp, aes(x =sample_id, y = pass_pct))+ geom_bar(stat = "identity") +
-    theme(axis.text.x = element_blank(), axis.ticks.x = element_blank()) + 
-    ggtitle("% of sites that pass filtering for each sample")
-  
-  
-  # histogram of coverage passing 
-  plot3 <- ggplot(coverage_samp, aes(x = pass_pct)) + geom_histogram(breaks = seq(0,1, by =0.02)) + 
-    ggtitle("Histogram of sample quality") + 
-    theme_bw()
-  
-  return(list(cov_table, plot1, plot2, plot3))
+  return(plot1)
 }
 
+#------------------------------------------------
+#' @title Plot quality of each sample
+#'
+#' @description Plot quality of each sample.
+#'
+#' @param missing_matrix matrix of missingness encoded as a binary variable.
+#'
+#' @import ggplot2
+#' @export
 
+plot_sample_quality <- function(missing_matrix) {
+  
+  # check inputs
+  assert_matrix(missing_matrix)
+  
+  # get quality per sample
+  q <- 1 - rowMeans(missing_matrix, na.rm = TRUE)
+  df_plot <- data.frame(samp = 1:length(q), quality = q)
+  
+  # basic plot
+  plot1 <- ggplot() + theme_bw() + theme(axis.text.x = element_blank(),
+                                         axis.ticks.x = element_blank())
+  plot1 <- plot1 + geom_line(aes_(x = ~samp, y = ~quality), data = df_plot)
+  plot1 <- plot1 + xlab("sample") + ylab("quality")
+  plot1 <- plot1 + ylim(c(0,1))
+  
+  return(plot1)
+}
 
+#------------------------------------------------
+#' @title Plot histogram of quality of each locus
+#'
+#' @description Plot histogram of quality of each locus.
+#'
+#' @param missing_matrix matrix of missingness encoded as a binary variable.
+#'
+#' @import ggplot2
+#' @export
+
+plot_locus_quality_hist <- function(missing_matrix) {
+  
+  # check inputs
+  assert_matrix(missing_matrix)
+  
+  # get quality per locus
+  q <- 1 - colMeans(missing_matrix, na.rm = TRUE)
+  df_plot <- data.frame(x = q)
+  
+  # basic plot
+  plot1 <- ggplot() + theme_bw()
+  plot1 <- plot1 + geom_histogram(aes_(x = ~x), breaks = seq(0,1,0.02), data = df_plot)
+  plot1 <- plot1 + xlab("quality") + ylab("frequency")
+  
+  return(plot1)
+}
+
+#------------------------------------------------
+#' @title Plot histogram of quality of each sample
+#'
+#' @description Plot histogram of quality of each sample.
+#'
+#' @param missing_matrix matrix of missingness encoded as a binary variable.
+#'
+#' @import ggplot2
+#' @export
+
+plot_sample_quality_hist <- function(missing_matrix) {
+  
+  # check inputs
+  assert_matrix(missing_matrix)
+  
+  # get quality per sample
+  q <- 1 - rowMeans(missing_matrix, na.rm = TRUE)
+  df_plot <- data.frame(x = q)
+  
+  # basic plot
+  plot1 <- ggplot() + theme_bw()
+  plot1 <- plot1 + geom_histogram(aes_(x = ~x), breaks = seq(0,1,0.02), data = df_plot)
+  plot1 <- plot1 + xlab("quality") + ylab("frequency")
+  
+  return(plot1)
+}
